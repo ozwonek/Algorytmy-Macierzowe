@@ -43,16 +43,17 @@ def binet_with_padding(A: np.ndarray, B: np.ndarray):
     
     return _mul(A_pad, B_pad)[:n, :m]
 
-def binet_without_padding(X: np.ndarray, Y: np.ndarray):
-    n, kX = X.shape
-    kY, m = Y.shape
 
-    if min(n, kX, m) == 1:
+def binet_without_padding(X: np.ndarray, Y: np.ndarray):
+    n, k = X.shape
+    _, m = Y.shape
+
+    if min(n, k, m) == 1:
         return X @ Y
     
     n //= 2
     m //= 2
-    k = kX // 2
+    k //= 2
 
     X11 = X[:n, :k]
     X12 = X[:n, k:]
@@ -71,3 +72,22 @@ def binet_without_padding(X: np.ndarray, Y: np.ndarray):
     top = np.hstack((Z11, Z12), dtype=Float)
     bot = np.hstack((Z21, Z22), dtype=Float)
     return np.vstack((top, bot), dtype=Float)        
+
+
+def binet_two_split(X: np.ndarray, Y: np.ndarray):
+    n, k = X.shape
+    _, m = Y.shape
+
+    if min(n, k, m) == 1:
+        return X @ Y
+    
+    mx = max(n, k, m)
+    if mx == n:
+        n //= 2
+        return np.vstack(((binet_two_split(X[:n, :], Y), binet_two_split(X[n:, :], Y))), dtype=Float)
+    elif mx == m:
+        m //= 2
+        return np.hstack(((binet_two_split(X, Y[:, :m]), binet_two_split(X, Y[:, m:]))), dtype=Float)
+    else:
+        k //= 2
+        return binet_two_split(X[:, :k], Y[:k, :]) + binet_two_split(X[:, k:], Y[k:, :])
