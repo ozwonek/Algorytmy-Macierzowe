@@ -5,6 +5,7 @@ import numpy as np
 import pandas as df
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
+from Ai import Ai, benchmark_Ai
 
 def random_matrix(n: int, m: int):
     matrix = np.random.random((n, m)) + 0.00000001
@@ -16,7 +17,7 @@ names = ["Binet dzielenie na 2", "Binet bez paddingu", "Strassen bez paddingu", 
 
 def create_statistics(n: int, m:int, k: int, functions, names):
     results = []
-    for i in range(n,m):
+    for i in range(n,m,10):
         A = random_matrix(i, i)
         B = random_matrix(i, i)
         for j in range(k):
@@ -25,6 +26,25 @@ def create_statistics(n: int, m:int, k: int, functions, names):
                 stats['size'] = i
                 stats['method'] = name
                 results.append(stats)
+
+    full_df = df.concat(results, ignore_index=True)
+    avg_df = full_df.groupby(["size", "method"], as_index=False).mean(numeric_only=True)
+    return avg_df
+
+def create_statistics_for_ai(m: int, k: int):
+    results = []
+    a, b = 4, 5
+    while a * b <= m:
+        A = random_matrix(a, b)
+        B = random_matrix(b, b)
+        for j in range(k):
+            _, stats = benchmark_Ai(A, B)
+            stats['size'] = f"{a * b}"
+            stats['method'] = "Ai"
+            results.append(stats)
+        a *= 4
+        b *= 5
+    
     full_df = df.concat(results, ignore_index=True)
     avg_df = full_df.groupby(["size", "method"], as_index=False).mean(numeric_only=True)
     return avg_df
