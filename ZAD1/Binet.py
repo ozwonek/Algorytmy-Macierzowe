@@ -1,20 +1,9 @@
 import numpy as np
 from Float import Float
+from helpers import add_padding
 
 def binet_with_padding(A: np.ndarray, B: np.ndarray):
-    n, kA = A.shape
-    kB, m = B.shape
-
-    mx = max(n, kA, m)
-    next_pow2 = 1
-    while next_pow2 < mx:
-        next_pow2 *= 2
-    
-    A_pad, B_pad = np.zeros((next_pow2, next_pow2)), np.zeros((next_pow2, next_pow2))
-    A_pad[:n, :kA] = A
-    B_pad[:kB, :m] = B
-    A_pad = np.frompyfunc(Float, 1, 1)(A_pad)
-    B_pad = np.frompyfunc(Float, 1, 1)(B_pad)
+    A_pad, B_pad, n, m = add_padding(A, B)
 
     def _mul(X: np.ndarray, Y: np.ndarray):
         n = X.shape[0]
