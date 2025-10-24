@@ -1,7 +1,11 @@
 import numpy as np
 from Float import Float
-from helpers import add_padding
+from helpers import add_padding, multiply_matrices
+from benchmark import benchmark
 
+@benchmark(reference_func=multiply_matrices)
+def strassen_with_padding_benchmark(A: np.ndarray, B: np.ndarray):
+    return strassen_with_padding(A, B)
 def strassen_with_padding(A: np.ndarray, B: np.ndarray):
     A_pad, B_pad, n, m = add_padding(A, B)
     
@@ -39,6 +43,10 @@ def strassen_with_padding(A: np.ndarray, B: np.ndarray):
         return np.vstack((top, bot), dtype=Float)
     
     return _mul(A_pad, B_pad)[:n, :m]
+
+@benchmark(reference_func=multiply_matrices)
+def strassen_without_padding_benchmark(A: np.ndarray, B: np.ndarray):
+    return strassen_without_padding(A, B)
 
 def strassen_without_padding(A: np.ndarray, B: np.ndarray):
     n = A.shape[0]
@@ -84,7 +92,6 @@ def strassen_without_padding(A: np.ndarray, B: np.ndarray):
     P5 = strassen_without_padding(X11 + X12, Y22)
     P6 = strassen_without_padding(X21 - X11, Y11 + Y12)
     P7 = strassen_without_padding(X12 - X22, Y21 + Y22)
-
     Z11 = P1 + P4 - P5 + P7
     Z12 = P3 + P5
     Z21 = P2 + P4

@@ -1,5 +1,7 @@
 import numpy as np
 from Float import Float
+from benchmark import benchmark
+
 
 def add_padding(A: np.ndarray, B: np.ndarray):
 
@@ -20,5 +22,10 @@ def add_padding(A: np.ndarray, B: np.ndarray):
 
     return A_pad, B_pad, n, m 
 
+def multiply_matrices(A, B):
+    return A @ B
 
 
+@benchmark(reference_func=multiply_matrices)
+def numpy_benchmark(A, B):
+    return multiply_matrices(A, B)

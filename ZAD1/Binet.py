@@ -1,5 +1,19 @@
 import numpy as np
 from Float import Float
+from benchmark import benchmark
+from helpers import multiply_matrices
+
+@benchmark(reference_func=multiply_matrices)
+def binet_with_padding_benchmark(A: np.ndarray, B: np.ndarray):
+    return binet_with_padding(A, B)
+
+@benchmark(reference_func=multiply_matrices)
+def binet_without_padding_benchmark(A: np.ndarray, B: np.ndarray):
+    return binet_without_padding(A, B)
+
+@benchmark(reference_func=multiply_matrices)
+def binet_two_split_benchmark(A: np.ndarray, B: np.ndarray):
+    return binet_two_split(A, B)
 
 def binet_with_padding(A: np.ndarray, B: np.ndarray):
     n, kA = A.shape
