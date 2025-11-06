@@ -3,17 +3,17 @@ import numpy as np
 from typing import Tuple
 from inverse import *
 
-def lu_factorization(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def lu_factorization(A: np.ndarray, mul) -> Tuple[np.ndarray, np.ndarray]:
     n = A.shape[0]
 
     if n == 1:
         return np.array([[Float(1)]], dtype=Float), np.array([[A[0, 0]]], dtype=Float)
     
     k = n // 2
-    L11, U11 = lu_factorization(A[:k, :k])
-    L21 = A[k:, :k] @ inverse(U11, triangular=Triangular.UPPER)
-    U12 = inverse(L11, triangular=Triangular.LOWER) @ A[:k, k:]
-    LS, US = lu_factorization(A[k:, k:] - L21 @ U12)
+    L11, U11 = lu_factorization(A[:k, :k], mul = mul)
+    L21 = A[k:, :k] @ inverse(U11, mul = mul, triangular=Triangular.UPPER)
+    U12 = mul (inverse(L11, mul = mul, triangular=Triangular.LOWER) , A[:k, k:])
+    LS, US = lu_factorization(A[k:, k:] - mul(L21 , U12), mul = mul)
 
     Ltop = np.hstack((L11, np.vectorize(Float)(np.zeros((k, n - k), dtype=Float))), dtype=Float)
     Lbot = np.hstack((L21, LS), dtype=Float)

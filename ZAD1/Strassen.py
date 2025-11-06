@@ -1,7 +1,7 @@
 import numpy as np
-from Float import Float
+from utils.Float import Float
 from helpers import add_padding, multiply_matrices
-from benchmark import benchmark
+from utils.benchmark import benchmark
 
 @benchmark(reference_func=multiply_matrices)
 def strassen_with_padding_benchmark(A: np.ndarray, B: np.ndarray):

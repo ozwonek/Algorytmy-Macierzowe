@@ -1,6 +1,6 @@
 import numpy as np
-from Float import Float
-from benchmark import benchmark
+from utils.Float import Float
+from utils.benchmark import benchmark
 from helpers import multiply_matrices
 
 @benchmark(reference_func=multiply_matrices)

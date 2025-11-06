@@ -1,6 +1,6 @@
 import numpy as np
-from Float import Float
-from benchmark import benchmark
+from utils.Float import Float
+from utils.benchmark import benchmark
 
 
 def add_padding(A: np.ndarray, B: np.ndarray):
