@@ -9,7 +9,7 @@ from inverse import *
 from lu import *
 
 
-def create_statistics(n: int, m:int, k: int, func, name):
+def create_statistics(n: int, m:int, k: int,  func, name):
     results = []
     for i in range(n,m,10):
         A = random_matrix(i)
@@ -17,7 +17,8 @@ def create_statistics(n: int, m:int, k: int, func, name):
         for j in range(k):
                 if name == "gauss":
                     _, stats = func(A,b)
-                _, stats = func(A)
+                else:     
+                    _, stats = func(A)
                 stats['size'] = i
                 stats['method'] = name
                 results.append(stats)
