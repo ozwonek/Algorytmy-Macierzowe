@@ -1,6 +1,6 @@
 import numpy as np
 from Float import Float
-from inverse import inverse, Triangular
+from inverse import *
 from lu import lu_factorization
 from typing import Tuple
 
@@ -12,7 +12,7 @@ def gauss_elimination(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, np.ndar
     
     k = n // 2
     L11, U11 = lu_factorization(A[:k, :k])
-    L11_inv = inverse(L11,triangular=Triangular.LOWER)
+    L11_inv = inverse(L11, triangular=Triangular.LOWER)
     A11_inv = inverse(A[:k, :k])
 
     C11 = U11
@@ -20,11 +20,11 @@ def gauss_elimination(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, np.ndar
     C21 = np.vectorize(Float)(np.zeros((n - k, k), dtype=Float))
     S = A[k:, k:] - A[k:, :k] @ A11_inv @ A[:k, k:]
     LS, LU = lu_factorization(S)
-    LS_inv = inverse(LS ,triangular=Triangular.LOWER)
+    LS_inv = inverse(LS, triangular=Triangular.LOWER)
     C22 = LU
 
     b1 = L11_inv @ b[:k, :]
-    b2 = LS_inv @ (b[k:, :] - A[k:, :k]) @ A11_inv  @ b[:k, :]
+    b2 = LS_inv @ (b[k:, :] - A[k:, :k] @ A11_inv @ b[:k, :])
 
     Ctop = np.hstack((C11, C12), dtype=Float)
     Cbot = np.hstack((C21, C22), dtype=Float)
