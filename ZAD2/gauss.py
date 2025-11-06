@@ -1,30 +1,30 @@
 import numpy as np
 from Float import Float
-from inverse import *
+from inverse import inverse, Triangular
 from lu import lu_factorization
 from typing import Tuple
 
-def gauss_elimination(A: np.ndarray, b: np.ndarray, mul) -> Tuple[np.ndarray, np.ndarray]:
+def gauss_elimination(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     n = A.shape[0]
 
     if n == 1:
         return np.array([[Float(1)]], dtype=Float), np.array([[b[0, 0] / A[0, 0]]], dtype=Float)
     
     k = n // 2
-    L11, U11 = lu_factorization(A[:k, :k], mul = mul)
-    L11_inv = inverse(L11, mul = mul,triangular=Triangular.LOWER)
-    A11_inv = inverse(A[:k, :k], mul = mul)
+    L11, U11 = lu_factorization(A[:k, :k])
+    L11_inv = inverse(L11,triangular=Triangular.LOWER)
+    A11_inv = inverse(A[:k, :k])
 
     C11 = U11
-    C12 = mul(L11_inv, A[:k, k:])
+    C12 = L11_inv @ A[:k, k:]
     C21 = np.vectorize(Float)(np.zeros((n - k, k), dtype=Float))
-    S = A[k:, k:] - mul(mul(A[k:, :k], A11_inv) , A[:k, k:])
-    LS, LU = lu_factorization(S, mul = mul)
-    LS_inv = inverse(LS, mul = mul ,triangular=Triangular.LOWER)
+    S = A[k:, k:] - A[k:, :k] @ A11_inv @ A[:k, k:]
+    LS, LU = lu_factorization(S)
+    LS_inv = inverse(LS ,triangular=Triangular.LOWER)
     C22 = LU
 
-    b1 = mul(L11_inv , b[:k, :])
-    b2 = mul(mul( mul(LS_inv , (b[k:, :] - A[k:, :k])) , A11_inv),  b[:k, :])
+    b1 = L11_inv @ b[:k, :]
+    b2 = LS_inv @ (b[k:, :] - A[k:, :k]) @ A11_inv  @ b[:k, :]
 
     Ctop = np.hstack((C11, C12), dtype=Float)
     Cbot = np.hstack((C21, C22), dtype=Float)
