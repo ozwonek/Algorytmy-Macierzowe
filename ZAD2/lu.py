@@ -22,3 +22,13 @@ def lu_factorization(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     Rbot = np.hstack((np.vectorize(Float)(np.zeros((n - k, k), dtype=Float)), US), dtype=Float)
 
     return np.vstack((Ltop, Lbot), dtype=Float), np.vstack((Rtop, Rbot), dtype=Float)
+
+def determinant(A: np.ndarray) -> Float:
+    L, U = lu_factorization(A)
+    n = A.shape[0]
+    det = Float(1)
+    
+    for i in range(n):
+        det *= L[i, i] * U[i, i]
+    
+    return det

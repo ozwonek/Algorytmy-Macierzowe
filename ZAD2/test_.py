@@ -75,3 +75,13 @@ def test_gauss(n: int):
     
     err = np.max(np.abs(x_custom_float - x_numpy))
     assert np.allclose(x_custom_float, x_numpy, atol=EPS_ATOL, rtol=EPS_RTOL), f"max(x_custom - x_numpy) = {err}"
+
+@pytest.mark.parametrize("n", [n for n in range(1, 21)])
+def test_determinant(n: int):
+    A = random_matrix(n)    
+    det_custom = determinant(A)    
+    A_numpy = A.astype(np.float64)
+    det_numpy = np.linalg.det(A_numpy)    
+    det_custom_float = float(det_custom)    
+    err = abs(det_custom_float - det_numpy)
+    assert np.allclose(det_custom_float, det_numpy, atol=EPS_ATOL, rtol=EPS_RTOL), f"Custom det = {det_custom_float}, NumPy det = {det_numpy}, error = {err}"
