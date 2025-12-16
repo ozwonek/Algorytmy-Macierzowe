@@ -1,0 +1,190 @@
+class Node:
+    def __init__(self, U = None, S = None, V = None, children = []):
+        self.U = U
+        self.S = S
+        self.V = V
+        self.children = children
+
+import numpy as np
+from node import Node
+
+def reconstructMatrix(node):
+    if len(node.children) == 0:
+        return node.U @ np.diag(node.S) @ node.V
+
+    top_left = reconstructMatrix(node.children[0])
+    top_right = reconstructMatrix(node.children[1])
+    bot_left = reconstructMatrix(node.children[2])
+    bot_right = reconstructMatrix(node.children[3])
+
+    top = np.hstack((top_left, top_right))
+    bot = np.hstack((bot_left, bot_right))
+    return np.vstack((top, bot))
+
+def compressMatrix(M, rank, eps):
+    U, S, V = np.linalg.svd(M, full_matrices=False)
+    S = S[S > eps]
+    rank = min(rank, S.shape[0])
+    
+    U = U[:, :rank]
+    S = S[:rank]
+    V = V[:rank, :]
+
+    return Node(U, S, V) 
+
+def computeError(M_original, node_compressed):
+    M_compressed = reconstructMatrix(node_compressed)
+    num = np.linalg.norm(M_original - M_compressed, ord='fro')
+    den = np.linalg.norm(M_original, ord='fro')
+    if den < 1e-12:
+        return 0.0 if num < 1e-12 else 1.0
+    return num / den
+
+def createTree(M, max_rank, eps):
+    compressed = compressMatrix(M, max_rank, eps)
+    if min(M.shape) <= max_rank or computeError(M, compressed) <= eps:
+        return compressed
+    
+    mid_row, mid_col = M.shape[0] // 2, M.shape[1] // 2
+    children = [
+        createTree(M[:mid_row, :mid_col], max_rank, eps),
+        createTree(M[:mid_row, mid_col:], max_rank, eps),
+        createTree(M[mid_row:, :mid_col], max_rank, eps),
+        createTree(M[mid_row:, mid_col:], max_rank, eps)
+    ]
+
+    return Node(children=children)
+
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+from tree import *
+
+def visualizeCompression(node, M, row1, row2, col1, col2):
+    if len(node.children) == 0:
+        rank = len(node.S)
+        M[row1 : row2, col1 : col1 + rank] = 0
+        M[row1 : row1 + rank, col1 : col2] = 0
+        return
+    
+    row_mid, col_mid = (row1 + row2) // 2, (col1 + col2) // 2
+    visualizeCompression(node.children[0], M, row1, row_mid, col1, col_mid)
+    visualizeCompression(node.children[1], M, row1, row_mid, col_mid, col2)
+    visualizeCompression(node.children[2], M, row_mid, row2, col1, col_mid)
+    visualizeCompression(node.children[3], M, row_mid, row2, col_mid, col2)
+
+def loadImage(path):
+    return np.asarray(Image.open(path).convert('RGB')) / 255.0
+
+def compressionPipeline(image, max_rank, eps):
+    R, G, B = image[:, :, 0], image[:, :, 1], image[:, :, 2]    
+    R_root, G_root, B_root = createTree(R, max_rank, eps), createTree(G, max_rank, eps), createTree(B, max_rank, eps)
+    R_compress, G_compress, B_compress = np.ones(image.shape[:2]), np.ones(image.shape[:2]), np.ones(image.shape[:2])
+    visualizeCompression(R_root, R_compress, 0, image.shape[0], 0, image.shape[1])
+    visualizeCompression(G_root, G_compress, 0, image.shape[0], 0, image.shape[1])
+    visualizeCompression(B_root, B_compress, 0, image.shape[0], 0, image.shape[1])
+    R_reconstructed = reconstructMatrix(R_root)
+    G_reconstructed = reconstructMatrix(G_root)
+    B_reconstructed = reconstructMatrix(B_root)
+    image_reconstructed = np.stack((R_reconstructed.clip(0, 1), G_reconstructed.clip(0, 1), B_reconstructed.clip(0, 1)), axis=-1)
+    return {
+        "original_image": image,
+        "reconstructed_image": image_reconstructed,
+        "reconstruced_red": R_reconstructed,
+        "reconstruced_green": G_reconstructed,
+        "reconstruced_blue": B_reconstructed,
+        "compressed_red": R_compress,
+        "compressed_green": G_compress,
+        "compressed_blue": B_compress
+    }
+
+def plotSingularValues(RS, GS, BS):
+    fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+
+    axes[0].plot(RS, color="red")
+    axes[0].set_title("Red singular values")
+    axes[0].set_xlabel("Index")
+    axes[0].set_ylabel("σ")
+    axes[0].set_yscale("log")
+
+    axes[1].plot(GS, color="green")
+    axes[1].set_title("Green singular values")
+    axes[1].set_xlabel("Index")
+    axes[1].set_yscale("log")
+
+    axes[2].plot(BS, color="blue")
+    axes[2].set_title("Blue singular values")
+    axes[2].set_xlabel("Index")
+    axes[2].set_yscale("log")
+
+    plt.tight_layout()
+    plt.show()
+
+def plotCompressionResults(image, max_rank, eps, title=""):
+    result = compressionPipeline(image, max_rank, eps)
+
+    fig, axes = plt.subplots(3, 3, figsize=(15, 15))
+    plt.suptitle(f"Max rank = {max_rank}, epsilon = {eps:.3f} ({title})", fontsize=16)
+
+    axes[0, 0].imshow(result["original_image"])
+    axes[0, 0].set_title("Original image")
+    axes[0, 0].axis("off")
+
+    axes[0, 1].imshow(result["reconstructed_image"])
+    axes[0, 1].set_title("Reconstructed image")
+    axes[0, 1].axis("off")
+
+    axes[0, 2].text(
+        0.5, 0.5,
+        f'MSE: {np.mean(np.square(result['original_image'] - result["reconstructed_image"])):.3f}',
+        ha="center", va="center", fontsize=14
+    )
+    axes[0, 2].axis("off")
+
+    axes[1, 0].imshow(result["reconstruced_red"], cmap="Reds")
+    axes[1, 0].set_title("Reconstructed Red")
+    axes[1, 0].axis("off")
+
+    axes[1, 1].imshow(result["reconstruced_green"], cmap="Greens")
+    axes[1, 1].set_title("Reconstructed Green")
+    axes[1, 1].axis("off")
+
+    axes[1, 2].imshow(result["reconstruced_blue"], cmap="Blues")
+    axes[1, 2].set_title("Reconstructed Blue")
+    axes[1, 2].axis("off")
+
+    axes[2, 0].imshow(result["compressed_red"], cmap="gray")
+    axes[2, 0].set_title("Compressed Red Matrix")
+    axes[2, 0].axis("off")
+
+    axes[2, 1].imshow(result["compressed_green"], cmap="gray")
+    axes[2, 1].set_title("Compressed Green Matrix")
+    axes[2, 1].axis("off")
+
+    axes[2, 2].imshow(result["compressed_blue"], cmap="gray")
+    axes[2, 2].set_title("Compressed Blue Matrix")
+    axes[2, 2].axis("off")
+
+    plt.tight_layout(rect=[0, 0, 1, 0.96]) 
+    plt.show()
+
+
+from plots import *
+import numpy as np
+
+image = loadImage("cat.jpg")
+R, G, B = image[:, :, 0], image[:, :, 1], image[:, :, 2]
+
+_, RS, _ = np.linalg.svd(R)
+_, GS, _ = np.linalg.svd(G)
+_, BS, _ = np.linalg.svd(B)
+
+plotSingularValues(RS, GS, BS)
+
+for max_rank in (1, 4):
+    for color, singularValues in (('red', RS), ('green', GS), ('blue', BS)):
+        plotCompressionResults(image, max_rank, singularValues[1], f"first singular value of {color}")
+        plotCompressionResults(image, max_rank, singularValues[len(singularValues) // 2], f"middle singular value of {color}")
+        plotCompressionResults(image, max_rank, singularValues[-1], f"last singular value of {color}")
+
+plotCompressionResults(image, 3, 0.098, f"Parameters chosen empirically")
