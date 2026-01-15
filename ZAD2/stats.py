@@ -7,6 +7,7 @@ from benchmark import *
 from gauss import *
 from inverse import *
 from lu import *
+from scipy.optimize import curve_fit
 
 
 def create_statistics(n: int, m:int, k: int,  func, name):
@@ -41,6 +42,18 @@ def plot_metric(df, metric, functionName):
     plt.legend()
     plt.grid(True)
     plt.show()
+
+def fit_curve(name1, name2, dataframe):
+    x_data = [i for i in dataframe[name1]]
+    y_data = dataframe[name2]
+    def power_law(x, a, k):
+        return a*x**k
+
+    params, covariance = curve_fit(power_law, x_data, y_data, p0=[1.0, 1.0])
+    a, k = params
+    print(f"Exponent k is approximately: {k}")
+    print(f"contant a is approximately: {a}")
+    return a, k
 
 @benchmark()
 def gauss_elimination_benchmark(A: np.ndarray, b: np.ndarray):
