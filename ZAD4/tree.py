@@ -17,7 +17,6 @@ def reconstructMatrix(node):
 
 def compressMatrix(M, rank, eps):
     U, S, V = randomized_svd(M, rank)
-    rank = min(rank, S.shape[0])
     return Node(U, S, V)
 
 def createTree(M, max_rank, eps):

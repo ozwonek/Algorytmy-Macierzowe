@@ -17,4 +17,4 @@ def generate_3d_crate_matrix(k):
     return M
 
 def calculate_error(M1, M2):
-    return np.linalg.norm(M1 - M2, ord='fro')
+    return np.linalg.norm(M1 - M2, ord='fro')**2
