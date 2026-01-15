@@ -16,4 +16,4 @@ root = createTree(M, 2, 32)
 vector = np.random.rand(M.shape[0], 1)
 
 print(M.shape)
-print(calculate_error(M @ vector, matrix_mul_vector(root, vector)))
+print(calculate_error(M @ vector, matrix_vector_mult(root, vector)))
