@@ -1,5 +1,6 @@
 import numpy as np
 from node import Node
+from sklearn.utils.extmath import randomized_svd
 
 def reconstructMatrix(node):
     if len(node.children) == 0:
@@ -15,20 +16,14 @@ def reconstructMatrix(node):
     return np.vstack((top, bot))
 
 def compressMatrix(M, rank, eps):
-    U, S, V = np.linalg.svd(M, full_matrices=False)
-    S = S[S > eps]
+    U, S, V = randomized_svd(M, rank)
     rank = min(rank, S.shape[0])
-    
-    U = U[:, :rank]
-    S = S[:rank]
-    V = V[:rank, :]
-
-    return Node(U, S, V) 
+    return Node(U, S, V)
 
 def createTree(M, max_rank, eps):
     compressed = compressMatrix(M, max_rank, eps)
-    if len(compressed.S) <= min(max_rank, min(M.shape) // 2):
-        return compressed
+    if min(M.shape) // 2 <= max_rank or compressed.S[-1] <= eps:
+        return compressed.normalize(eps)
     
     mid_row, mid_col = M.shape[0] // 2, M.shape[1] // 2
     children = [

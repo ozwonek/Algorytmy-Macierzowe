@@ -15,3 +15,6 @@ def generate_3d_crate_matrix(k):
                 if 0 <= point - p**0 < N: M[point][point - p**0] = np.random.random()
                 if 0 <= point + p**0 < N: M[point][point + p**0] = np.random.random()
     return M
+
+def calculate_error(M1, M2):
+    return np.linalg.norm(M1 - M2, ord='fro')
