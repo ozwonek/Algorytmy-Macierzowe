@@ -18,25 +18,22 @@ def compressMatrix(M, rank):
 import numpy as np
 
 def _resize(node):
-    # Force dimensionality
     node.U = np.asarray(node.U)
     node.V = np.asarray(node.V)
     node.S = np.asarray(node.S).reshape(-1)
 
     if node.U.ndim == 1:
-        node.U = node.U.reshape(-1, 1)          # (n,) -> (n,1)
+        node.U = node.U.reshape(-1, 1)     
     elif node.U.ndim == 0:
         node.U = node.U.reshape(1, 1)
 
     if node.V.ndim == 1:
-        node.V = node.V.reshape(1, -1)          # (m,) -> (1,m)
+        node.V = node.V.reshape(1, -1)    
     elif node.V.ndim == 0:
         node.V = node.V.reshape(1, 1)
 
-    # Force rank compatibility
     r = min(node.U.shape[1], node.S.shape[0], node.V.shape[0])
     if r < 1:
-        # smallest non-crashing fallback
         n = node.U.shape[0]
         m = node.V.shape[1]
         node.U = np.zeros((n, 1))
